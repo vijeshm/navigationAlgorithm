@@ -1,0 +1,580 @@
+\documentclass{article}
+
+\usepackage{graphicx}
+\begin{document}
+\begin{center}
+\Huge{Approximation Algorithm for computing All Pair Shortest Path by conceptualizing the way Humans Navigate} \\\
+\end{center}
+
+\begin{abstract}
+Finding the \textit{shortest path} between any given pair of vertices is one of the most frequently encountered requirements in network analysis. Djikstras Algorithm and BFS traversal from the source to the target provide us with solutions to this problem. But these are very costly operations. They require the knowledge of the entire network as well. As the size of the complex network increases, both methods prove to be very costly operations.\\
+
+In this paper, we propose an alternative method to find the approximate shortest path between any given pair of vertices in a complex network. The algorithm is split up into two stages. The first stage is the preprocessing stage. It uses a method in which each edge is associated with a reward and finds a set of important nodes in the network, referred to as \textit{HotSpots}. The second stage deals with finding the approximate shortest path for any arbitrary pair of nodes, using the edge rewards and the \textit{HotSpots} from the first stage.
+\end{abstract}
+
+\section{Introduction}
+\textit{Shortest Path}, for a pair of vertices in an unweighted graph, is the minimum path length between the source and the target. In Network Analysis, finding the shortest path between a pair of vertices plays a very significant role. The various fields where one requires the assistance of shortest path algorithms extensively are Road Networks, GPS Systems, Topological Navigation of AI, Routing over Computer Networks, Social Networks etc.\\
+
+The algorithm presented here is motivated by the way in which humans navigate in a city. Lets say a person \textit{X} is at an arbitrary point \textit{S} in a city and wants to reach a destination \textit{T} as quickly as possible. There is a high probability that \textit{X} will initially choose to go to a city hub, say, a bus terminal \textit{B}, and then try to reach \textit{T} from \textit{B}. The important point to note here is that \textit{X} chooses to enter any one of the \textit{HotSpots} of the city via which \textit{X} can reach \textit{T}. By analogy, there exists a set of nodes in any given network which serve as \textit{HotSpots} for the network. Our algorithm deduces this set of nodes using the method of Flagging. This method is explained in detail in section 3.1. The navigation within the network is achieved through a greedy technique based on the rewards associated with each edge.\\
+
+\section{Preliminaries and Notations}
+We start with an undirected simple graph $G$. Let $V(G)$ and $E(G)$ denote Vertex Set and Edge Set respectively. Let $u,v \in V(G)$ denote any two vertices. Let $N_{G}(v)$ denote the set of neighbors of $v$ in a graph G. A \textit{walk} is a sequence of nodes in a graph, such that each consecutive pair of vertices in the sequence is connected by an egde. A \textit{path} is a walk in which the no vertex is repeated. \textit{Length} of the path is the number of edges encountered in the path. A \textit{cycle} is a path such that the starting vertex and the terminal vertex are the same. \textit{Shortest Paths} between any two pair of vertices $u$ and $v$ are the paths connecting $u$ and $v$ having minimum path length for that pair. A \textit{walker} is a hypothesized navigator that navigates through the network. A walker starting from a vertex \textit{u} is denoted by $W_u$. The walk that the walker follows during navigation is referred to as the \textit{trajectory} of walker, denoted by $Trjctry(walker)$. A \textit{random walk} is a trajectory in which each consecutive step of the walker is chosen in a random manner. The $state$ of the walker at any instance is the vertex at which it resides at that instance. Let $S_{W_u}$ denote the state of the walker $W_u$.\\
+
+\section{The Idea behind the Algorithm}
+
+The algorithm is split up into two components, the Learning Component and the Navigation Component. The Learning Component deals with the preprocessing of the graph G. The $walker$ in the Navigation Component uses the results from the Learning Component to greedily decide its next transition.\\
+
+\subsection{Learning Component}
+Consider the two vertices $u,v \in V(G)$. Place two walkers $W_u$ and $W_v$ on $u$ and $v$ respectively. Let $W_u$ and $W_v$ take random walks simulatneously, starting from $u$ and $v$ respectively, until their walks intersect at some vertex, say $H$. Let $L_u$ be the path length from $u$ to $H$, and $L_v$ be the path length from $v$ to $H$. Reward the directed edges along the path from $u$ to $H$ with $\frac{1}{L_u}$, and reward the directed edges along the path from $v$ to $H$ with $\frac{1}{L_v}$. Flag the intersection point $H$. Perform the above mentioned procedure over several pairs of $u$ and $v$.\\
+
+Doubt: How many pairs? We can show a plot of how the ratio b/w approx shortest path and actual shortest varies as the number of sample vertices vary. Do it for Scale Free and Erdos Renyi graphs and analyze the plots.\\
+Vary the number of sample vertices from nC2/4 to nC2 * log(nC2) in the appropriate number of steps (for SFN and ERG, choose the number of parameters accordingly depending on the time).\\
+Explanation for the graph: Randomized behavior in the beginning because of innacurate learning. It stabilizes later as the number of trials increase. Law of Large Numbers hold good.\\
+
+Let $Rndm(u) | u \in V(G)$ denote a random walk of arbitrary length starting from $u$. Let $H \in V(G)$ denote the point at which the intersection has occured. Let $Flags(u)| u \in V(G)$ denote the number of flags that $u$ has received. Let $Rwrd(u,v) | u,v \in V(G)$ and $(u,v) \in E(G)$ denote the reward associated with each edge. Let $HotSpotOrdering$ be the ordering of the vertices in the decreasing order of their number of flags.\\
+
+Algorithm for Learning Component:
+\begin{enumerate}
+
+\item For all $(a,b) \in E(G)$\\
+Initialize $Rwrd(a,b) \longleftarrow 0$
+
+\item
+\begin{enumerate}
+
+\item Consider two vertices $(u,v) | u,v \in V(G)$
+
+\item Construct $Rndm(u)$ and $Rndm(v)$ simultaneously until\\
+$Rndm(u) \bigcap Rndm(v) \ne \phi$
+
+\item Let\\
+$H \longleftarrow Rndm(u) \bigcap Rndm(v)$\\
+$Rndm(u) \longleftarrow$ the directed walk from $u$ to $H$, along the sequence followed by $Rndm(u)$\\
+$Rndm(v) \longleftarrow$ the directed walk from $v$ to $H$, along the sequence followed by $Rndm(v)$
+
+\item Remove all the cycles from $Rndm(u)$ and $Rndm(v)$
+
+\item Let\\
+$P_u \longleftarrow$ path length of $Rndm(u)$\\
+$P_v \longleftarrow$ path length of $Rndm(v)$
+
+\item $Flags(H) \longleftarrow Flags(H) + 1$
+
+\item For every directed edge $(a,b) | a,b \in Rndm(u)$ and $index(b)-index(a) = 1 $\\
+$Rwrd(a,b) \longleftarrow Rwrd(a,b) + \frac{1}{P_u}$
+
+\item For every directed edge $(a,b) | a,b \in Rndm(v)$ and $index(b)-index(a) = 1 $\\
+$Rwrd(a,b) \longleftarrow Rwrd(a,b) + \frac{1}{P_v}$
+
+\end{enumerate}
+
+\item Repeat Step 2 for every unordered pair $(u,v) | u,v \in V(G)$
+\item Let
+$HotSpotOrdering \longleftarrow$ list of vertices in descending order of their number of Flags, $Flags(u) | u \in V(G)$. Tie breaking is done arbitrarily.
+
+\item Let the first $\alpha$ number of nodes from $HotSpotOrdering$ constitute the $HotSpots$ set. 
+
+\item Create a lookup table for All Pair Shortest Path between the all the elements of $HotSpots$ using Djikstra's Algorithm. Let $HotSpotLookup$ denote the lookup table. $HotSpotLookup(u,v) | u,v \in HotSpots$ returns the shortest path between $u$ and $v$.
+
+\end{enumerate}
+
+The information from $HotSpots$, $HotSpotLookup$ and the edge reward function $Rwrd(u,v) | (u,v) \in E(G)$ is utilized in the Navigation Component of the algorithm.
+
+\subsection{Navigation Component}
+The Navigation Component deals with finding the approximate shortest path between the Source $s | s \in V(G)$ and Target $t \in V(G)$. The navigation technique involves 3 stages:
+\begin{enumerate}
+\item Finding a path from $s$ to $H_s | H_s \in HotSpots$
+\item Finding a path from $t$ to $H_t | H_t \in HotSpots$
+\item Integrating the paths from $(s,H_s)$, $(H_s, H_t)$ and $(H_t,t)$ into $(s,t)$.\\
+\end{enumerate}
+
+The partial paths are constructed using the technique of greedy traversal through the graph. The constructed partial paths are then integrated into a full path from the source to the target. The way in which the partial paths are constructed is illustrated by the following algorithm.\\
+
+Algorithm for Navigation Component:
+
+\begin{enumerate}
+
+\item Let a walker $W_s$ be placed on the source $s$. 
+\item Each transition of $W_s$ is driven by the greedy choice\\
+$NextState_{W_s} = arg$ $max$ $Rwrd(S_{W_s}, N_{G}(S_{W_s}))$
+
+\item Repeat Step 2 until $NextState_{W_s} \in HotSpots$.
+
+\item Set $H_s = NextState_{W_s}$.
+
+\item Let a walker $W_t$ be placed on the target $t$. 
+\item Each transition of $W_t$ is driven by the greedy choice\\
+$NextState_{W_t} = arg$ $max$ $Rwrd(S_{W_t}, N_{G}(S_{W_t}))$
+
+\item Repeat Step 6 until $NextState_{W_t} \in HotSpots$.
+
+\item Set $H_t = NextState_{W_t}$.
+
+\item Path Integration:\\
+Initialize $CompletePath_{s,t} \longleftarrow Trjctry(W_s)$\\
+Append $HotSpotLookup(H_s, H_t)$ to $CompletePath_{s,t}$\\
+Reverse $Trjctry(W_t)$ and append it to $CompletePath_{s,t}$.
+
+\end{enumerate} 
+
+$CompletePath_{s,t}$ is the approximate shortest path between $s$ and $t$, obtained by our Navigation Algorithm. In the next section, we present and analyze the results obtained by the application our algorithm to various classes of graphs.
+
+Figure 1 illustrates the greedy technique of finding the approximate shortest  path between $s$ and $t$. 
+
+\begin{figure}[htp]
+\centering
+\includegraphics[scale=0.08]{Results/greedywalk.jpg}
+\caption{This figure illustrates the algorithm to find the approximate shortest path beetween the Source $s$ and the Target $t$, as presented in section 3.2. Source $s$ and the Target $t$ is denoted by the red dots. The region marked with yellow indicates the $HotSpot$ set. With reference to the algorithm in section 3.2, the Red Paths indicate $Trjctry(W_s)$ and $Trjctry(W_t)$ and the Green Path indicates $HotSpotLookup(H_s, H_t)$. For the sake of simplicity, the edges connecting these nodes are not shown in the figure.}
+\label{}
+\end{figure}
+
+
+\section{Results and Discussions}
+
+Let us now discuss the results we obtained when the proposed framework was applied to several classes of graphs.
+
+\textit{Scale-Free Networks}: *Insert Scale Free Network description here*
+
+\textit{Erdos-Renyi Graphs}: *Insert Erdos Renyi Graph description here*
+
+\subsection{Selection of optimum $\alpha$}
+
+\begin{table}[ht]
+\centering
+\caption{Selection of optimum $\alpha$}
+
+\begin{tabular}{cc}
+\includegraphics[scale=0.15]{Results/ErdosRenyi100015cutpoint33.png}
+& 
+\includegraphics[scale=0.15]{Results/scalefreenetworks10004cutpoint100.png}\\
+
+(a)\\
+Plot of variation of\\
+number of flags versus $HotSpotIndex$\\
+for an Erdos Renyi network of 1000 nodes\\
+and edge probabilty of 0.15.\\
+&
+(b)\\
+\textit{(Shift this to the next column in Latex Somehow)}\\
+Plot of variation of\\
+number of flags versus $HotSpotIndex$\\
+for a Barabasi Albert Graph of 1000 nodes\\
+and 4 connections.
+
+\end{tabular}
+\label{tab:gt}
+\end{table}
+
+The $HotSpotOrdering$ list contains the node labels arranged in the decreasing order of their number of flags. Let $HotSpotIndex$ of a node $u | u \in V(G)$ denote the position of $u$ in $HotSpotOrdering$. \\
+Let $HotSpotOrdering = \{h_1, h_2, h_3,.... h_{|V|}\}$.\\ Now $HotSpotIndex_u = i | u = h_i$.\\
+The above plots [Table 1] is a graphical representation of number of flags received during Learning Component versus the $HotSpotIndex$.\\
+
+Let $\alpha = |HotSpots|$. As $\alpha$ decreases, the navigation through the network during the Navigation Component [section 3.2] becomes increasingly difficult since it takes a longer path to reach $H | H \in HotSpots$. As $\alpha$ increases, the difficulty involved in computing the All Pair Shortest Path between the elements of $HotSpots$ using Djikstra's Algorithm also increases drastically, in the order of $O(\alpha^3)$. Hence, there is a need to optimize $\alpha$.\\
+
+$HotSpots$ is constructed by appending the nodes from $HotSpotOrdering$ one by one. By analyzing the plot of number of flags versus $HotSpotIndex$, we see that the curve takes a sharp turn at the initial values of $HotSpotIndex$ [Table 1]. That is, the rate of decrease of flagging decreases drastically at the point where the curve takes a sharp turn. From this point onwards, further addition of the nodes corresponding to $HotSpotIndex$ into $HotSpots$ becomes redundant. Hence, we set\\
+$\alpha =$ point at which the curve takes a sharp turn.\\
+
+Table 1(a) illustrates the flag distribution for an Erdos Renyi network of 1000 nodes and an edge probability of 0.15. The plot shown here takes a sharp turn at the 33rd hotspot. Hence, $\alpha$ is set to 33.
+Table 1(b) illustrates the flag distribution for a Barabasi Albert Graph of 1000 nodes and 4 connections. The plot shown here takes a sharp turn at the 100th hotspot. Hence, $\alpha$ is set to 100.\\
+
+\subsection{Edge Betweenness Centrality and Flag Centrality}
+
+\subsection{Comparison between various navigation techniques}
+
+This section highlights the effectiveness of greedy navigation over other trivial methods of navigation. Consider two vertices $s,t \in V(G)$. Let $s$ be Source and $t$ be the Target. In the Navigation Component of the algorithm, our aim is to find the approximate shortest path between $s$ and $t$. Let $SPL_{s,t}$ denote the length of the shortest path between $s$ and $t$. Here are a few methods one can adopt to accomplish the task of finding the approximate shortest path between $s$ and $t$:\\
+
+\begin{enumerate}
+\item 1-Raw Random Walk:\\
+The idea here is to start from the source vertex $s$ and take a random walk $Rndm(s)$ until the target vertex $t$ is reached. Since this technique involves a single random walk, it is referred to as 1-Raw Random Walk. Let $\beta_{s,t}$ denote the path length of $Rndm(s)$. Let $\beta$ be the average ratio of length of 1-Raw Random Walk and length of the shortest path, taken over all unordered pair of nodes $(s,t) | s,t \in V(G)$.\\
+Mathematically, $\beta = \frac{1}{^{|V|}C_2} \sum_{s,t \in V(G)} \frac{\beta_{s,t}}{SPL_{s,t}}$\\
+Figure 2 illustrates the technique of 1-Raw Random Walk from $s$ to $t$. $Rndm(s)$ terminates when it reaches $t$. $Rndm(s)$ is indicated by the red walk. Source $s$ and the Target $t$ is denoted by the red dots. The blue dots indicate the other nodes in the network. For the sake of simplicity, the edges connecting these nodes are not shown in the figure.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[scale=0.08]{Results/1rawrandomwalk.jpg}
+\caption{This figure illustrates the working of 1-Raw Random Walk from the Source $s$ to the Target $t$. The red walk indicates $Rndm(s)$. $s$ and $t$ are indicated by red. All the other nodes are indicated by blue. The edges between these nodes are not shown in the figure for the sake of simplicity.}
+\label{}
+\end{figure}
+
+\item 2-Raw Random Walk:\\
+The idea involved in this technique is to take random walks $Rndm(s)$ and $Rndm(t)$ from $s$ and $t$ simultaneously until the two walks intersect. $Rndm(s)$ and $Rndm(t)$ are then integrated into one single path from $s$ to $t$. This idea is similar to the one implemented in the Learning Component [Section 3.1]. Note that the integrated path may contain redundant cycles as well. Since this technique involves two random walks from both source and the target, it is referred to as 2-Raw Random Walk. Let $\gamma_{s,t}$ denote the length of the integrated path. Let $\gamma$ be the average ratio of length of 2-Raw Random Walk and the length of the shortest path, taken over all the unordered pairs of nodes $(s,t) | s,t \in V(G)$.\\
+Mathematically, $\gamma = \frac{1}{^{|V|}C_2} \sum_{s,t \in V(G)} \frac{\gamma_{s,t}}{SPL_{s,t}}$
+
+Figure 3 illustrates the technique of 2-Raw Random Walk between $s$ and $t$. $Rndm(s)$ and $Rndm(t)$ are constructed simultaneously until $Rndm(s) \bigcap Rndm(t) \ne \phi$. The intersection point of the two walks is indicated by $H$. $Rndm(s)$ and $Rndm(t)$ are indicated by the red walk and green walk respectively. Source $s$ and the Target $t$ is denoted by the red dots. The blue dots indicate the other nodes in the network. For the sake of simplicity, the edges connecting these nodes are not shown in the figure.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[scale=0.08]{Results/2rawrandomwalk.jpg}
+\caption{This figure illustrates the working of 2-Raw Random Walk between the Source $s$ to the Target $t$. $Rndm(s)$ and $Rndm(t)$ is indicated by the red walk and the green walk respectively. $s$ and $t$ are indicated by red. All the other nodes are indicated by blue. The edges between these nodes are not shown in the figure for the sake of simplicity.}
+\label{}
+\end{figure}
+
+\item Greedy Walk:\\
+The idea behind this technique is illustrated in section 3.2. Let $\delta_{s,t}$ denote the path length of $CompletePath_{s,t}$. Let $\delta$ be the average ratio of length of the greedy path and the length of the shortest path, taken over all the unordered pairs of nodes $(s,t) | s,t \in V(G)$.\\
+Mathematically, $\delta = \frac{1}{^{|V|}C_2} \sum_{s,t \in V(G)} \frac{\delta_{s,t}}{SPL_{s,t}}$.
+
+Figure 1 illustrates the greedy technique of finding the approximate shortest  path between $s$ and $t$. 
+
+\end{enumerate}
+
+The quantities $\beta$, $\gamma$ and $\delta$ indicate the factor by which the paths obtained from the various navigation techniques are longer compared to the shortest path. Ideally, these average ratios should tend to 1.\\
+
+\begin{table}[ht]
+\centering
+\caption{Comparison between various navigation techniques}
+\begin{tabular}{cc}
+\includegraphics[scale=0.3]{Results/dummy.jpg}
+&
+\includegraphics[scale=0.3]{Results/dummy.jpg}\\
+
+(a)\\
+This graph is a plot of $\beta$, $\gamma$ and $\delta$\\
+versus the number of nodes for an\\
+Erdos Renyi network with an edge\\
+probability of 0.15.\\
+&
+(b)\\
+\textit{(Shift this section to the next column somehow)}\\
+This graph is a plot of $\beta$, $\gamma$ and $\delta$\\
+versus the number of nodes for a\\
+Barabasi Albert Graph with 4 connections\\
+
+\end{tabular}
+\label{tab:gt}
+\end{table}
+
+*Indicate which color corresponds to which ratio*\\
+
+Table 2 (a) is a plot of variation of $\beta$, $\gamma$ and $\delta$ versus the number of nodes for an Erdos Renyi network with an edge probability of 0.15. Table 2 (b) is a plot of variation of $\beta$, $\gamma$ and $\delta$ versus the number of nodes for a Scale Free Network with 4 connections.\\
+
+From the plots, it is clear that the $\delta$-curve always lies below that of the $\alpha$ and $\beta$ curves. This implies that, the greedy navigation performs better than 1-Raw Random Walk and 2-Raw Random Walk.\\
+
+Tip 3,4,5\\
+3 in 1 plots
+
+\newpage
+
+\subsection{Ratio of pathlengths/shortestPathLength}
+
+Tip 8\\
+3 in 1 plots
+
+\newpage
+\subsection{Hotspot Reachability}
+
+\begin{table}[ht]
+\centering
+\caption{Reachability of HotSpots}
+
+\begin{tabular}{cc}
+\includegraphics[scale=0.15]{Results/randomwalkhotspothitVSgreedywalkhotspothit.png}
+&
+\includegraphics[scale=0.15]{Results/randomwalkhotspothitVSgreedywalkhotspothitSFN.png}\\
+
+(a)\\
+Plot of variation of $\lambda$ for a set of\\
+Erdos Renyi networks with edge probabilty\\
+0.15. The number of nodes is varied from\\
+100 to 1000 in steps of 15. At each step,\\
+$\lambda$ is calculated and plotted against\\
+the number of nodes.\\
+&
+(b)\\
+\textit{(Shift this to the next column somehow)}\\
+Plot of variation of $\lambda$ for a set of\\
+Barabasi Albert Graphs with 4 connections.\\
+The number of nodes is varied from\\
+100 to 1000 in steps of 15. At each step,\\
+$\lambda$ is calculated and plotted against\\
+the number of nodes.\\
+\end{tabular}
+\label{tab:gt}
+\end{table}
+
+$HotSpots$ are a set of important nodes in a graph $G$. $Reachability$ of $HotSpots$ refers to how quickly one can reach any of the hotspots, starting from any vertex outside the hotspots set. This section showcases the importance of greedy traversal in reaching the HotSpots set by considering the $reachability$ of the hotspots from any vertex $u | u \in V(G) - HotSpots$. Here, we ponder upon two methods of reaching any $H | H \in HotSpots$, starting from $u$.\\
+
+The first method considers taking a random walk $Rndm(u)$ until the walk leads to a hotspot, i.e, $Rndm(u) \bigcap HotSpots \ne \phi$. The second method considers a greedy decision at every step, as illustrated in the algorithm of section 3.2, until the path leads to a hotspot. Let $\lambda$ be the average ratio of length of the random walk from any vertex and the length of the greedy path from the same vertex.\\
+Mathematically, $\lambda$ = $\frac{1}{|V| - \alpha} \sum_{s \in V(G) - HotSpots} \frac{Length Of Random Walk Hotspot Hit}{Length of Greedy Path HotSpot Hit}$\\
+
+Figure 4 graphically illustrates the two methods discussed above. The red path indicates the greedy traversal from the source $s$ to hotspot $H_2$. The green path indicates a random walk from the same source $s$ to hotspot $H_1$. Note that $H_1$ might be same as $H_2$ since the green walk is constructed in a random fashion. $\lambda$ is viewed as the average ratio of length of the green path and the length of the red path, taken over all $s | s \in V(G) - hotspots$.\\
+
+Table 3(a) and 3(b) shows the variation of $\lambda$ with the number of nodes for Erdos Renyi networks and Barabasi Albert Graphs respectively. Note that $\lambda > 1$. On an average, this implies that the method of random walk takes a longer path to reach any $H | H \in HotSpots$ compared to the method of greedy path. This showcases the effectiveness of the greedy traversal during the Navigation Component [section 3.2].
+
+\begin{figure}[htp]
+\centering
+\includegraphics[scale=0.1]{Results/randVSreinhotspothit.jpg}
+\caption{Reachability of Hotspots. The red path indicates the greedy traversal from the source $s$ to the hotspot $H_2$. The green path indicates a random walk from the same source $s$ to the hotspot $H_1$. Note that $H_1$ might be same as $H_2$ since the green. $\lambda$ is the average ratio of length of the green path and the length of the red path, taken over all $s | s \in V(G)$. From Table 3, note that $\lambda>1$.}
+\label{}
+\end{figure}
+
+\subsection{Hotspot Distribution for various classes of graphs}
+
+In this section, we discuss about the concentration of $HotSpots$ in $G$. Concentration of $HotSpots$ is the extent to which the hotspots are clustered with respect to each other. One way to assess the concentration is to label the nodes of $G$ with integers and analyze the histogram of hotspot distribution for various instances of the same class of graphs.\\
+
+\newpage
+
+\begin{figure}[htp]
+\centering
+\includegraphics[scale=0.30]{Results/dummy.jpg}
+\caption{This figure illustrates the Hotspot Distribution for 4 different Erdos Renyi networks of 1000 nodes and an edge probability of 0.2. We clearly see that the hotspot distribution for each graph varies from one another. The reason for such a behaviour lies in the fact that these networks are built in  a random fashion.}
+\label{}
+\end{figure}
+
+Erdos Renyi networks are constructed in a random fashion. Consider two Erdos Renyi networks of 1000 nodes and 0.15 edge probability each. Even though the parameters for graph construction are the same, the hotspots set for both the graphs need not remain the same. This is due to the way in which the Erdos Renyi networks are constucted.\\
+Figure 5 shows the histogram of hotspot distribution for 4 different Erdos Renyi networks of 1000 nodes and 0.2 edge probability.
+
+Sum of lengths of shortest paths between the hotspots.\\
+Scattered, Concentrated.\\
+
+
+1. Generate 4 Erdos Renyi(1000, 0.15) graphs and plot the hotspot distribution. Show that they different.\\
+2. Generate 4 BA (1000, 4) graphs and plot the hotspot distribution. Show that they do not change and they are same as the degree centrality.\\
+Reason: This behaviour is inherent from the way in which Barabasi Albert graphs are constructed. With a very high probability, the random walks in a BA graph will lead to one of the high degree nodes. Hence, the intersection node $H$ in the Learning Component of the algorithm [section 3.1] will be a node with a high degree. Therefore, the top few nodes with high degree serve as hotspots for the network. \\
+Let $DegOrdering(G)$ be the ordering of the vertices based on the decreasing degree centrality. The top $\alpha$ number of vertices from $DegOrdering(G)$ is same as $HotSpots$. 
+
+What is hotspot distribution?
+
+
+Scale Free Networks: Degree Centrality\\
+Erdos Renyi: Random Distribution\\
+
+\begin{table}[ht]
+\centering
+\caption{HotSpot distribution}
+
+\begin{tabular}{cc}
+\includegraphics[scale=0.3]{Results/dummy.jpg}
+&
+\includegraphics[scale=0.3]{Results/dummy.jpg}\\
+
+(a)\\
+Histogram for HotSpot distribution\\
+for an Erdos Renyi network of 1000 \\
+nodes and an edge probability of 0.1.\\
+&
+(b)\\
+\textit{(Move this to the next column somehow)}\\
+Histogram for HotSpot Distribution\\
+for a Barabasi Albert Graph of 1000 nodes\\
+and 4 connections.
+\end{tabular}
+\label{tab:gt}
+\end{table}
+
+
+
+Tip 7\\
+
+Tips:
+\begin{enumerate}
+\item DONE\\
+How to choose alpha?
+
+\item ASK SUDARSHAN\\
+edge betweenness centralities vs Our Centrality\\
+Prove that our method is not betweenness centrality
+
+\item Plot of average of $\frac{1 Raw Random Walk from A-B}{Reinforced Walk from A-B}$ for all $A,B \in V(G)$ with number of nodes varying from 100 to 5000 in steps of 50.\\
+Note: The 1 raw random walk also includes cycles\\
+parameters:\\
+Scale Free Networks: 4 connections, \\
+Erdos Renyi Graphs: 0.5 probability\\
+Bridge Graphs: 0.5 probability., show that the bridges are also the hotspots\\
+
+\item Plot of average of $\frac{2 Raw Random Walk from A-B}{Reinforced Walk from A-B}$ for all $A,B \in V(G)$ with number of nodes varying from 100 to 5000 in steps of 50.\\
+Note: The 2 raw random walk also includes cycles.\\
+parameters:\\
+Scale Free Networks: 4 connections, \\
+Erdos Renyi Graphs: 0.5 probability\\
+Bridge Graphs: 0.5 probability., show that the bridges are also the hotspots\\ 
+
+\item Plot of average of $\frac{Greedy Walk from A-B}{Actual Shortest Path from A-B}$ for all $A,B \in V(G)$ with number of nodes varying from 100 to 5000 in steps of 50.\\
+parameters:\\
+Scale Free Networks: 4 connections, \\
+Erdos Renyi Graphs: 0.5 probability\\
+Bridge Graphs: 0.5 probability., show that the bridges are also the hotspots\\
+
+\item
+DONE\\
+Plot of average of $\frac{Number Of Steps Required To Reach A Hotspot From a Vertex A Using Random Walks}{Number Of Steps Required To Reach A Hotspot From a Vertex A Using Greedy Technique}$ for all $A \in V(G)$.\\
+parameters:\\
+Scale Free Networks: 4 connections\\
+Erdos Renyi Graphs: 0.5 probability\\\
+Bridge Graphs: 0.1 probability, show that the bridges are definitely the hotspots\\
+
+\item Hotspots distribution for various graphs\\
+Show that:\\
+the hotspots in a scale free network are the ones with the high degree.\\
+the hotspots in a Erdos Renyi Graph is randomly distributed.\\
+the bridge nodes in the Bridge Graph are always the hotspots.\\
+
+\item Plot these average path lengths together for nodes varying from 100 to 5000 in steps of 50:\\
+for all $u,v \in V(G)$, start a random walk from $u$ and $v$ simultaneously. When the intersect, integrate the path. Divide by the shortest actual path length. Call it plot 1.\\
+for all $u,v \in V(G)$, start a random walk from $u$ and $v$ until both of them hit a hotspot. Then join the hotspots and integrate the path. Divide by the actual shortest path length. Call it plot 2\\
+for all $u,v \in V(G)$, start a greedy walk from $u$ and $v$ until both of them hit a hotspot. Then join the hotspots and intgrate the path. Divide by the actual shortest path length. Call it plot 3. \\
+parameters:\\
+Scale Free Networks: 4 connections\\
+Erdos Renyi Graphs: 0.1 probability\\
+Bridge Graphs: 0.1 probability\\
+This plot emperically proves that the rewarding method works well.
+
+\item Plot the variation of average ratio of GreedyWalk/ShortestPath for different alpha, for a scale free network of 1000 nodes.
+\end{enumerate}
+
+\section{Applications on Real World Networks}
+
+\section{Conclusion}
+???
+\section{Algorithm}
+\subsection{Stage I: Reinforcement Learning}
+In this section, we present Stage I of the Algorithm, Reinforcement Learning. Consider a Graph $G(V,E)$. Consider all unordered pairs $(A,B) | A,B\epsilon V$\\. For each pair, take a random walk from $A$ and $B$ until the paths intersect at some vertex, say $H$. Remove all the cycles in the path and flag $H$. Let $PathA$ and $PathB$ be the path from $A$ to $H$ and $H$ to $B$ respectively. Reward the edges along $pathA$ with $\frac{1}{length of pathA}$, and reward the edges along $PathB$ with $\frac{1}{length of pathB}$. Perform the same procedure for several times for a every unordered pair of vertices $(A,B) | A,B \epsilon V$.\\
+
+Algorithm Reinforce$(G, numOfTrials, fn)$:\\
+	$ W \to $ Weight Matrix initialized with zeroes\\
+	The entries in the W is the weight of the directed edge from the row entry to the column entry, if it exists.
+	
+	$Flagger \to $ List of size $|V|$ initialized with zeroes\\
+	
+	\textbf{for} $(A,B) | A,B \epsilon V$\\
+		\textbf{for} $trialNumber \to 1$ to $numOfTrials$\\
+			$PathA \to $ list initialized with $A$\\
+			$PathB \to $ list initialized with $B$\\
+			
+			$WalkerA \to A$\\
+			$WalkerB \to B$\\
+			
+			\textbf{while} $(True)$\\
+				$WalkerAAdj \to $ neighbors of $WalkerA$\\
+				$WalkerBAdj \to $ neighbors of $WalkerB$\\
+				
+				$RandA \to $ random element from $WalkerAAdj$\\
+				$RandB \to $ random element from $WalkerBAdj$\\
+
+				append $RandA$ to the list $PathA$\\
+				append $RandB$ to the list $PathB$\\
+
+				\textbf{if} $PathA$ $intersection$ $PathB = \phi$\\
+					$WalkerA = RandA$\\
+					$WalkerB = RandB$\\
+				\textbf{else}\\
+					break out from the loop
+
+			\textbf{if} $RandA \epsilon PathB$\\
+				$Hit = RandA$\\
+			\textbf{else}\\ 
+				$Hit = RandB$
+
+			$Path \to $ empty list\\
+			$Index \to $ index of the element $Hit$ in $PathA$\\
+			\textbf{for} $i = 0$ to $Index-1$\\
+				append $PathA$[$i$] to $Path$\\
+
+			$Index \to$ index of the element $Hit$ in $PathB$\\
+			\textbf{for} $i \to Index$ to $0$\\
+				append $PathB$[$i$] to $Path$\\
+
+			Remove all cycles from $Path$
+
+			$Flagger$[$Hit$] $\to Flagger$[$Hit$] $+1$\\
+
+			$Alength \to$ index of $Hit$ in $Path$\\
+			$Blength \to ($size of $Path - 1) - Alength$\\
+
+			\textbf{for} $i \to 0$ to $Alength-1$\\
+				$W[Path[i]][Path[i+1]] \to W[Path[i]][Path[i+1]] + \frac{1}{Alength}$\\
+			
+			\textbf{for} $i \to 0$ to $Blength-1$\\
+				$W[Path[Alength+i]][Path[Alength + i + 1]] \to W[Path[Alength+i]][Path[Alength + i + 1]] + \frac{1}{Blength}$
+			
+	$SortedVertices \to$ list containing vertices in the decreasing order of the number of times it has been flagged\\
+	
+	$HotSpots \to$ top $fn$ number of elements from $SortedVertices$\\
+
+	$HotSpotLookup \to$ empty matrix of dimensions $fn \times fn$\\ 
+	\textbf{for} $i\to0$ to $fn-1$\\
+		\textbf{for} $j\to0$ to $fn$\\
+			$HotSpotLookup[i][j]\to$ actual shortest path between $HotSpots[i]$ and $HotSpots[j]$\\
+			
+The output of Stage I are:\\
+\begin{itemize}
+\item The $hotspot$ list
+\item A lookup table consisting of the actual shortest paths between all pairs of hotspots
+\item A weight matrix
+\end{itemize}
+
+For a given graph, the learning process is carried out only once.
+
+\subsection{Stage II: Network Navigation}
+After Stage I of the algorithm, we input a pair of vertices $(A,B)$ the Stage II. The algorithm finds a path from $A$ to one of the hotspots, and $B$ to one of the hotspots.\\
+The method to find the path from a vertex $P$ to a hotspot is as follows. Start from $P$ and navigate to that neighbor of $P$ whose edge weight is the maximum among all its neighbors. This kind of navigation ensures that we are getting closer and closer to a hotspot at each iterative step.\\
+Once a path is established between the vertices $(A,H_1)$ and $(B,H_2)$ such that $H_1,H_2 \epsilon hotspots$, we find the actual shortest path between $H_1$ and $H_2$, say $(H_1, H_2)$. We then integrate the paths $(A,H_1), (H_1, H_2)$ and $(H_2,B)$ to get the approximate shortest path between $A$ and $B$.\\
+
+Algorithm Query$(A,B)$:\\
+	$WalkerA = A$\\
+	$PathA\to$ list initialized with $A$\\
+	\textbf{while} $WalkerA$ doesnt belong to the $HotSpot set$\\
+		$WalkerAAdj\to$ neighbors of $WalkerA$\\
+		$WalkerWeights\to$ corresoponding edge weights of the neighbors of $WalkerA$ looking up from the $W$\\
+		$Index\to$ index of largest element of $WalkerWeights$\\
+		$MaxNeighbor\to WalkerAAdj[Index]$ 
+
+		\textbf{while} $MaxNeighbor \epsilon PathA$\\
+			remove $MaxNeighbor$ from $WalkerAAdj$\\
+			remove the corresponding element from $WalkerWeights$\\
+			
+			$Index\to$ index of largest element of $WalkerWeights$\\
+			$MaxNeighbor\to WalkerAAdj[Index]$ 
+
+
+		append $MaxNeighbor$ to $PathA$\\
+		$WalkerA \to MaxNeighbor$\\
+	Remove all the cycles from $PathA$\\
+
+	$WalkerB = B$\\
+	$PathB\to$ list initialized with $B$\\
+	\textbf{while} $WalkerB$ doesnt belong to the $HotSpot set$\\
+		$WalkerBAdj\to$ neighbors of $WalkerB$\\
+		$WalkerWeights\to$ corresoponding edge weights of the neighbors of $WalkerB$ looking up from $W$\\
+		$Index\to$ index of largest element of $WalkerWeights$\\
+		$MaxNeighbor\to WalkerBAdj[Index]$ 
+
+		\textbf{while} $MaxNeighbor \epsilon PathB$\\
+			remove $MaxNeighbor$ from $WalkerBAdj$\\
+			remove the corresponding element from $WalkerWeights$\\
+			
+			$Index\to$ index of largest element of $WalkerWeights$\\
+			$MaxNeighbor\to WalkerBAdj[Index]$ 
+
+
+		append $MaxNeighbor$ to $PathB$\\
+		$WalkerB \to MaxNeighbor$\\
+	Remove all the cycles from $PathB$\\
+
+	reverse $PathB$\\
+	$FullPath \to $ list initialized with contents of $PathA$\\
+	$HotSpotPath\to$ $HotSpotLookup[$last element of $PathA][$last element of$ PathB]$\\
+	extend the list $FullPath$ with $HotSpotPath$\\
+	extend the list $FullPath$ with $PathB$\\
+	return $FullPath$\\
+	
+In Djikstras and BFS Traversal algorithms, the processing is done for every query. In contrast, stage II of our algorithm does no processing at all. This fact makes our algorithm more efficient than Djikstras and BFS Traversal in the long run. Hence, amortized efficiency of our algorithm is better than that of Djikstras and BFS Algorithms.
+
+Consider 10000 queries on a complex network G. Djikstras and BFS Traversal algorithms completely processes the graph for each of those 10000 trials. Although our algorithm may require relatively more time to undergo reinforcement learning, but it outperforms the other algorithms in stage II.
+
+Dumpster\\
+
+Introduction Section:\\
+The Navigation uses only the locally available information. Hence, during the second phase of the algorithm, the knowledge of the entire network is unnecessary.\\
+
+Djikstras Algorithm and BFS Traversal are some of the well known shortest path algorithms. But both of them requires the knowledge of the entire network. The amortized efficiency of both the algorithms is quite costly. In contrast, our algorithm uses the local information for navigation within the network. Since Reinforcement Learning need not be performed for every query of arbitrary pair of vertices, the amortized efficiency for our algorithm is relatively better by a very large factor.\\
+
+Idea behind the algorithm:
+Tips: Notations for random walk, notation for the intersection point, notation flagger, notation for edge weights, notation for length of walk to intersection point\\
+
+Results and Discussions:
+Time in milliseconds for various alpha variation - Show that the curve is decreasing at first and then increases gradually again.
+We've to just show that there is a tradeoff between the choosing of alpha.
+Overall efficiency depends on alpha, alpha-cubed in particular.
+
+
+\end{document}
